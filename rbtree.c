@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <assert.h>
 #include "rbtree.h"
 
 NODE * root = NULL;
@@ -137,4 +138,292 @@ void inOrder(NODE * node) {
     inOrder(node -> left);
     printf("%d ", node -> key);
     inOrder(node -> right);
+}
+
+void verifyProperties(NODE * root) {
+    verifyProperty1(root);
+    printf("Property 1 that's OK!\n");
+    
+    verifyProperty2(root);
+    printf("Property 2 that's OK!\n");
+
+    verifyProperty4(root);
+    printf("Property 4 that's OK!\n");
+
+    verifyProperty5(root);
+    printf("Property 5 that's OK!\n");
+}
+
+void verifyProperty1(NODE * n) {    
+    assert(n -> color == RED || n -> color == BLACK);
+    
+    if (n == NULL) {
+        return;
+    }
+    
+    verifyProperty1(n -> left);
+    verifyProperty1(n -> right);
+}
+
+int verifyProperty2(NODE * root) {
+    assert(root -> color == BLACK);
+}
+
+void verifyProperty4(NODE * n) {
+    if (n -> color == RED) {
+        assert(n -> left -> color == BLACK); 
+        assert(n -> right -> color == BLACK);
+        assert(n -> parent -> color == BLACK);
+    }
+
+    if (n == NULL) {
+        return;
+    }
+
+    verifyProperty4(n -> left);
+    verifyProperty4(n -> right);
+}
+
+void verifyProperty5(NODE * root) {
+    int blackCountPath = -1;
+    verifyProperty5Helper(root, 0, &blackCountPath);
+}
+
+void verifyProperty5Helper(NODE * n, int blackCount, int * pathBlackCount) {
+    if (n -> color == BLACK) {
+        blackCount++;
+    }
+
+    if (n == NULL) {
+        if (*pathBlackCount == -1) {
+            *pathBlackCount = blackCount;
+        }
+        else {
+            assert(blackCount == *pathBlackCount);
+        }
+        return;
+    }
+    verifyProperty5Helper(n -> left,  blackCount, pathBlackCount);
+    verifyProperty5Helper(n -> right, blackCount, pathBlackCount);
+}
+
+NODE * search(int key) {
+    NODE * ghost = root;
+
+    while (ghost != NULL) {
+        if (ghost -> key > key) {
+            if (ghost -> left == NULL) {
+                break;
+            } else {
+                ghost = ghost -> left;
+            }
+        } else if (ghost -> key == key) {
+            break;
+        } else {
+            if (ghost -> right == NULL) {
+                break;
+            } else {
+                ghost = ghost -> right;
+            }
+        }
+    }
+
+    return ghost;
+}
+
+void removeKey(int key) {
+    if (root == NULL) {
+        return;
+    }
+
+    NODE * ghost = search(key);
+
+    if (ghost -> key != key) {
+        printf("\nNo node found to delete with value: %d\n", key);
+        return;
+    }
+
+    removeNode(ghost);
+}
+
+NODE * sucessor(NODE * node) {
+    NODE * ghost = node;
+
+    while (ghost -> left != NULL) {
+        ghost = ghost -> left;
+    }
+
+    return ghost;
+}
+
+NODE * replace(NODE * node) {
+    if (node -> left != NULL && node -> right != NULL) {
+        return sucessor(node -> right);
+    }
+
+    if (node -> left == NULL && node -> right == NULL) {
+        return NULL;
+    }
+
+    if (node -> left != NULL) {
+        return node -> left;
+    } else {
+        return node -> right;
+    }
+}
+int isOnLeft(NODE * node) {
+    if (node -> parent -> left == node) {
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+NODE * sibling(NODE * node) {
+    if (node -> parent == NULL) {
+        return NULL;
+    }
+
+    if (isOnLeft(node)) {
+        return node -> parent -> right;
+    }
+
+    return node -> parent -> left;
+}
+
+void swapKeys(NODE * x, NODE * y) {
+    int key;
+    key = x -> key;
+
+    x -> key = y -> key;
+    y -> key = key;
+}
+
+void removeNode(NODE * node) {
+    NODE * ghost = replace(node);
+
+    int verifyColorBlack = ((ghost == NULL || ghost -> color == BLACK) && (node -> color == BLACK)) ? TRUE : FALSE;
+    NODE * parent = node -> parent;
+
+    if (ghost == NULL) {
+        if (node == root) {
+            root = NULL;
+        } else {
+            if (verifyColorBlack) {
+                fixDoubleBlack(node);
+            } else {
+                NODE * sibling_node = sibling(node);
+                if (sibling_node != NULL) {
+                    sibling_node -> color = RED;
+                }
+            }
+
+            if (isOnLeft(node)) {
+                parent -> left = NULL;
+            } else {
+                parent -> right = NULL;
+            }
+        }
+
+        free(node);
+        return;
+    }
+
+    if (node -> left == NULL || node -> right == NULL) {
+        if (node == root) {
+            node -> key = ghost -> key;
+            node -> left = NULL;
+            node -> right = NULL;
+
+            free(ghost);
+        } else {
+            if (isOnLeft(node)) {
+                parent -> left = ghost;
+            } else {
+                parent -> right = ghost;
+            }
+
+            free(node);
+            ghost -> parent = parent;
+
+            if (verifyColorBlack) {
+                fixDoubleBlack(ghost);
+            } else {
+                ghost -> color = BLACK;
+            }
+        }
+        return;
+    }
+
+    swapKeys(ghost, node);
+    removeNode(ghost);
+}
+
+int hasRedChild(NODE * node) {
+    if (node -> left != NULL && node -> left -> color == RED) {
+        return TRUE;
+    } else if (node -> right != NULL && node -> right -> color == RED) {
+        return TRUE;
+    }
+
+    return FALSE;
+}
+
+void fixDoubleBlack(NODE * node) {
+    if (node == root) {
+        return;
+    }
+
+    NODE * sibling_node = sibling(node);
+    NODE * parent = node -> parent;
+
+    if (sibling_node == NULL) {
+        fixDoubleBlack(parent);
+    } else {
+        if (sibling_node -> color == RED) {
+            parent -> color = RED;
+            sibling_node -> color = BLACK;
+
+            if (isOnLeft(sibling_node)) {
+                rightRotate(parent);
+            } else {
+                leftRotate(parent);
+            }
+            
+            fixDoubleBlack(node);
+        } else {
+            if (hasRedChild(sibling_node)) {
+                if (sibling_node -> left != NULL && sibling_node -> left -> color == RED) {
+                    if (isOnLeft(sibling_node)) {
+                        sibling_node -> left -> color = sibling_node -> color;
+                        sibling_node -> color = parent -> color;
+                        rightRotate(parent);
+                    } else {
+                        sibling_node -> left -> color = parent -> color;
+                        rightRotate(sibling_node);
+                        leftRotate(parent);
+                    }
+                } else {
+                    if (isOnLeft(sibling_node)) {
+                        sibling_node -> right -> color = parent -> color;
+                        leftRotate(sibling_node);
+                        rightRotate(parent);
+                    } else {
+                        sibling_node -> right -> color = sibling_node -> color;
+                        sibling_node -> color = parent -> color;
+                        leftRotate(parent);
+                    }
+                }
+                parent -> color = BLACK;
+            } else {
+                sibling_node -> color = RED;
+
+                if (parent -> color == BLACK) {
+                    fixDoubleBlack(parent);
+                } else {
+                    parent -> color = BLACK;
+                }
+            }
+        }
+    }
 }

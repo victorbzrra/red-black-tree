@@ -3,7 +3,6 @@
 #include "rbtree.h"
 
 extern NODE * root;
-#define TRUE 1
 
 int main() {
     int user_choice;
@@ -15,6 +14,7 @@ int main() {
         printf("=======     RED BLACK TREE     =======\n");
         printf("[1] : INSERT NEW NODE\n");
         printf("[2] : SHOW RBTREE INORDER\n");
+        printf("[3] : DELETE NODE\n");
 
         printf("\nYour choice: ");
         scanf("%d", &user_choice);
@@ -34,6 +34,12 @@ int main() {
                 inOrder(root);
                 printf("\n");
 
+                break;
+            case 3:
+                printf("\nInsert a key: ");
+                scanf("%d", &key);
+
+                removeKey(key);
                 break;
             default:
                 printf("\nInvalid choice!\n");
