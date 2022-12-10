@@ -169,10 +169,11 @@ int verifyProperties(NODE * root) {
     }
 
     verify = verifyProperty4(root);
-    if (verify == 2) {
-        printf("Property 4 that's OK!\n");
-    } else {
+
+    if (verify == -1 || verify > 0) {
         return 0;
+    } else {
+        printf("Property 4 that's OK!\n");
     }
     
     verify = verifyProperty5(root);
@@ -219,7 +220,7 @@ int verifyProperty4(NODE * root) {
         }
         return verifyProperty4Left(root -> left) + verifyProperty4Right(root -> right);
     } else {
-        return 1;
+        return -1;
     }
 }
 
@@ -238,9 +239,9 @@ int verifyProperty4Left(NODE * left) {
                 return 1;
             }
         }
-        return 0 + verifyProperty4Left(left -> left);
+        return 0 + verifyProperty4Left(left -> left) + verifyProperty4Right(left -> right);
     } else {
-        return 1;
+        return 0;
     }
 }
 
@@ -259,9 +260,9 @@ int verifyProperty4Right(NODE * right) {
                 return 1;
             }
         }
-        return 0 + verifyProperty4Right(right -> right);
+        return 0 + verifyProperty4Right(right -> right) + verifyProperty4Left(right -> left);
     } else {
-        return 1;
+        return 0;
     }
 }
 
@@ -275,20 +276,20 @@ int verifyProperty5(NODE * node) {
 int verifyProperty5Left(NODE * left) {
     if (left != NULL) {
         if (left -> color == BLACK) {
-            return 1 + verifyProperty5Left(left -> left);
+            return 0 + verifyProperty5Left(left -> left) + verifyProperty5Right(left -> right);
         }
     } else {
-        return 0;
+        return 1;
     }
 }
 
 int verifyProperty5Right(NODE * right) {
     if (right != NULL) {
         if (right -> color == BLACK) {
-            return 1 + verifyProperty5Right(right -> right);
+            return 0 + verifyProperty5Right(right -> right) + verifyProperty4Left(right -> left);
         }
     } else {
-        return 0;
+        return 1;
     }
 }
 
