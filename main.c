@@ -4,11 +4,13 @@
 #include "rbtree.h"
 
 extern NODE * root;
+extern int size_of_tree;
 
 int main() {
     srand(time(NULL));
     int user_choice;
     int user_active = TRUE;
+    int random;
     int size;
 
     while (user_active == TRUE) {
@@ -29,7 +31,7 @@ int main() {
                 scanf("%d", &size);
 
                 for (int i = 0; i < size; i++) {
-                    int random = rand() % 100;
+                    random = rand() % 100;
                     NODE * ghost = createNode(i);
                     root = insertNode(root, ghost);
                     fixUp(root, ghost);
@@ -44,17 +46,12 @@ int main() {
 
                 break;
             case 3:
-                //  int loop = 0;
+                int loop = 0;
                 printf("\nInsert a value: ");
                 scanf("%d", &size);
-                
-                for (int i = 0; i < size; i++) {
-                    removeKey(i);
-                }
 
-                /*
                 while (loop < size) {
-                    int random = rand() % 100;
+                    random = rand() % 100;
                     NODE * search_random = search(random);
 
                     if (search_random != NULL && search_random -> key == random) {
@@ -62,7 +59,6 @@ int main() {
                         loop++;
                     }  
                 }
-                */
                 
                 printf("\nRemoved nodes!\n");
                 break;
@@ -72,8 +68,9 @@ int main() {
 
                 break;
             case 5:
-                int count_nodes = count(root);
-                printf("\n%d\n", count_nodes);
+                count(root);
+                printf("\n%d\n", size_of_tree);
+                size_of_tree = 0;
 
                 break;
             default:
