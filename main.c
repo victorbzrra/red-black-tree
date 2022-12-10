@@ -1,13 +1,15 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include "rbtree.h"
 
 extern NODE * root;
 
 int main() {
+    srand(time(NULL));
     int user_choice;
     int user_active = TRUE;
-    int key;
+    int size;
 
     while (user_active == TRUE) {
         system("clear");
@@ -15,18 +17,24 @@ int main() {
         printf("[1] : INSERT NEW NODE\n");
         printf("[2] : SHOW RBTREE INORDER\n");
         printf("[3] : DELETE NODE\n");
+        printf("[4] : VERIFY RBTREE\n");
+        printf("[5] : COUNT NODES\n");
 
         printf("\nYour choice: ");
         scanf("%d", &user_choice);
 
         switch (user_choice) {
             case 1:
-                printf("\nInsert a key: ");
-                scanf("%d", &key);
+                printf("\nInsert a size of your RBTREE: ");
+                scanf("%d", &size);
 
-                NODE * ghost = createNode(key);
-                root = insertNode(root, ghost);
-                fixUp(root, ghost);
+                for (int i = 0; i < size; i++) {
+                    int random = rand() % 100;
+                    NODE * ghost = createNode(i);
+                    root = insertNode(root, ghost);
+                    fixUp(root, ghost);
+                }
+                printf("\nRBTREE created!\n");
 
                 break;
             case 2:
@@ -36,10 +44,37 @@ int main() {
 
                 break;
             case 3:
-                printf("\nInsert a key: ");
-                scanf("%d", &key);
+                //  int loop = 0;
+                printf("\nInsert a value: ");
+                scanf("%d", &size);
+                
+                for (int i = 0; i < size; i++) {
+                    removeKey(i);
+                }
 
-                removeKey(key);
+                /*
+                while (loop < size) {
+                    int random = rand() % 100;
+                    NODE * search_random = search(random);
+
+                    if (search_random != NULL && search_random -> key == random) {
+                        removeKey(random);
+                        loop++;
+                    }  
+                }
+                */
+                
+                printf("\nRemoved nodes!\n");
+                break;
+            case 4:
+                int verify = verifyProperties(root);
+                if (!verify) printf("\nRBTREE failed!\n");
+
+                break;
+            case 5:
+                int count_nodes = count(root);
+                printf("\n%d\n", count_nodes);
+
                 break;
             default:
                 printf("\nInvalid choice!\n");
@@ -50,5 +85,5 @@ int main() {
         printf("\nTry again? 1 for 'yes' or other number for 'not' :)\n");
         scanf("%d", &user_active);
     }
-    
+    free(root);
 }

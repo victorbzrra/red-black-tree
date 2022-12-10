@@ -4,6 +4,7 @@
 #include "rbtree.h"
 
 NODE * root = NULL;
+int size_of_tree = 0;
 
 NODE * createNode(int key) {
     NODE * new_node = malloc(sizeof(NODE));
@@ -14,6 +15,16 @@ NODE * createNode(int key) {
     new_node -> parent = NULL;
 
     return new_node;
+}
+
+int count(NODE * root) {
+    if (root != NULL) {
+        size_of_tree += 1;
+        count(root -> left);
+        count(root -> right);
+    }
+
+    return size_of_tree;
 }
 
 NODE * insertNode(NODE * node, NODE * ghost) {
@@ -140,71 +151,164 @@ void inOrder(NODE * node) {
     inOrder(node -> right);
 }
 
-void verifyProperties(NODE * root) {
-    verifyProperty1(root);
-    printf("Property 1 that's OK!\n");
+int verifyProperties(NODE * root) {
+    int verify;
     
-    verifyProperty2(root);
-    printf("Property 2 that's OK!\n");
-
-    verifyProperty4(root);
-    printf("Property 4 that's OK!\n");
-
-    verifyProperty5(root);
-    printf("Property 5 that's OK!\n");
-}
-
-void verifyProperty1(NODE * n) {    
-    assert(n -> color == RED || n -> color == BLACK);
-    
-    if (n == NULL) {
-        return;
-    }
-    
-    verifyProperty1(n -> left);
-    verifyProperty1(n -> right);
-}
-
-int verifyProperty2(NODE * root) {
-    assert(root -> color == BLACK);
-}
-
-void verifyProperty4(NODE * n) {
-    if (n -> color == RED) {
-        assert(n -> left -> color == BLACK); 
-        assert(n -> right -> color == BLACK);
-        assert(n -> parent -> color == BLACK);
+    verify = verifyProperty1(root);
+    if (verify == 0 || verify == -1) {
+        return 0;
+    } else {
+        printf("Property 1 that's OK!\n");
     }
 
-    if (n == NULL) {
-        return;
+    verify = verifyProperty2(root);
+    if (verify == -1) {
+        return 0;
+    } else {
+        printf("Property 2 that's OK!\n");
     }
 
-    verifyProperty4(n -> left);
-    verifyProperty4(n -> right);
+    verify = verifyProperty4(root);
+    if (verify == 2) {
+        printf("Property 4 that's OK!\n");
+    } else {
+        return 0;
+    }
+    
+    verify = verifyProperty5(root);
+    if (verify == -1) {
+        return 0;
+    } else {
+        printf("Property 5 that's OK!\n");
+    }
 }
 
-void verifyProperty5(NODE * root) {
-    int blackCountPath = -1;
-    verifyProperty5Helper(root, 0, &blackCountPath);
+int verifyProperty1(NODE * node) {    
+    if (node == NULL) {
+        return 0;
+    }
+
+    if (node -> color == RED || node -> color == BLACK) {
+        verifyProperty1(node -> left);
+        verifyProperty1(node -> right);
+    } else {
+        return -1;
+    }
+
+    return 1;
 }
 
-void verifyProperty5Helper(NODE * n, int blackCount, int * pathBlackCount) {
-    if (n -> color == BLACK) {
+int verifyProperty2(NODE * node) {
+    return (node -> color == BLACK) ? 1 : -1;
+}
+
+int verifyProperty4(NODE * root) {
+    if (root != NULL) {
+        if (root -> color == RED) {
+            if (root -> left != NULL) {
+                if (root -> left -> color != BLACK) {
+                    return 1;
+                }
+            }
+
+            if (root -> right != NULL) {
+                if (root -> right -> color != BLACK) {
+                    return 1;
+                }
+            }
+        }
+        return verifyProperty4Left(root -> left) + verifyProperty4Right(root -> right);
+    } else {
+        return 1;
+    }
+}
+
+int verifyProperty4Left(NODE * left) {
+    if (left != NULL) {
+        if (left -> color == RED) {
+            if (left -> left != NULL && left -> left -> color != BLACK) {
+                return 1;
+            }
+
+            if (left -> right != NULL && left -> right -> color != BLACK) {
+                return 1;
+            }
+                
+            if (left -> parent != NULL && left -> parent -> color != BLACK) {
+                return 1;
+            }
+        }
+        return 0 + verifyProperty4Left(left -> left);
+    } else {
+        return 1;
+    }
+}
+
+int verifyProperty4Right(NODE * right) {
+    if (right != NULL) {
+        if (right -> color == RED) {
+            if (right -> left != NULL && right -> left -> color != BLACK) {
+                return 1;
+            }
+
+            if (right -> right != NULL && right -> right -> color != BLACK) {
+                return 1;
+            }
+                
+            if (right -> parent != NULL && right -> parent -> color != BLACK) {
+                return 1;
+            }
+        }
+        return 0 + verifyProperty4Right(right -> right);
+    } else {
+        return 1;
+    }
+}
+
+int verifyProperty5(NODE * node) {
+    if (node == NULL) {
+        return -1;
+    } else if (verifyProperty5Left(node -> left) == verifyProperty5Right(node -> right)){
+        return 1;
+    }
+}
+int verifyProperty5Left(NODE * left) {
+    if (left != NULL) {
+        if (left -> color == BLACK) {
+            return 1 + verifyProperty5Left(left -> left);
+        }
+    } else {
+        return 0;
+    }
+}
+
+int verifyProperty5Right(NODE * right) {
+    if (right != NULL) {
+        if (right -> color == BLACK) {
+            return 1 + verifyProperty5Right(right -> right);
+        }
+    } else {
+        return 0;
+    }
+}
+
+void verifyProperty5Helper(NODE * node, int blackCount, int * pathBlackCount) {
+    if (node -> color == BLACK) {
         blackCount++;
     }
 
-    if (n == NULL) {
-        if (*pathBlackCount == -1) {
-            *pathBlackCount = blackCount;
+    if (node == NULL) {
+        if (*(pathBlackCount) == -1) {
+            *(pathBlackCount) = blackCount;
         }
         else {
-            assert(blackCount == *pathBlackCount);
+            assert(blackCount == *(pathBlackCount));
         }
         return;
     }
-    verifyProperty5Helper(n -> left,  blackCount, pathBlackCount);
-    verifyProperty5Helper(n -> right, blackCount, pathBlackCount);
+
+    verifyProperty5Helper(node -> left,  blackCount, pathBlackCount);
+    verifyProperty5Helper(node -> right, blackCount, pathBlackCount);
 }
 
 NODE * search(int key) {
@@ -239,7 +343,7 @@ void removeKey(int key) {
     NODE * ghost = search(key);
 
     if (ghost -> key != key) {
-        printf("\nNo node found to delete with value: %d\n", key);
+        printf("\nNo node found to delete with value: [%d].\n", key);
         return;
     }
 
